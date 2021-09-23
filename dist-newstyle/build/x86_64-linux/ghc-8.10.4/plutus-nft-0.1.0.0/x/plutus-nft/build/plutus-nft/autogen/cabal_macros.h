@@ -20,6 +20,66 @@
   (major1) == 4 && (major2) <  14 || \
   (major1) == 4 && (major2) == 14 && (minor) <= 1)
 #endif /* MIN_VERSION_base */
+/* package bytestring-0.10.12.0 */
+#ifndef VERSION_bytestring
+#define VERSION_bytestring "0.10.12.0"
+#endif /* VERSION_bytestring */
+#ifndef MIN_VERSION_bytestring
+#define MIN_VERSION_bytestring(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  10 || \
+  (major1) == 0 && (major2) == 10 && (minor) <= 12)
+#endif /* MIN_VERSION_bytestring */
+/* package cardano-api-1.29.0 */
+#ifndef VERSION_cardano_api
+#define VERSION_cardano_api "1.29.0"
+#endif /* VERSION_cardano_api */
+#ifndef MIN_VERSION_cardano_api
+#define MIN_VERSION_cardano_api(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  29 || \
+  (major1) == 1 && (major2) == 29 && (minor) <= 0)
+#endif /* MIN_VERSION_cardano_api */
+/* package cardano-ledger-alonzo-0.1.0.0 */
+#ifndef VERSION_cardano_ledger_alonzo
+#define VERSION_cardano_ledger_alonzo "0.1.0.0"
+#endif /* VERSION_cardano_ledger_alonzo */
+#ifndef MIN_VERSION_cardano_ledger_alonzo
+#define MIN_VERSION_cardano_ledger_alonzo(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  1 || \
+  (major1) == 0 && (major2) == 1 && (minor) <= 0)
+#endif /* MIN_VERSION_cardano_ledger_alonzo */
+/* package plutus-ledger-0.1.0.0 */
+#ifndef VERSION_plutus_ledger
+#define VERSION_plutus_ledger "0.1.0.0"
+#endif /* VERSION_plutus_ledger */
+#ifndef MIN_VERSION_plutus_ledger
+#define MIN_VERSION_plutus_ledger(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  1 || \
+  (major1) == 0 && (major2) == 1 && (minor) <= 0)
+#endif /* MIN_VERSION_plutus_ledger */
+/* package plutus-ledger-api-0.1.0.0 */
+#ifndef VERSION_plutus_ledger_api
+#define VERSION_plutus_ledger_api "0.1.0.0"
+#endif /* VERSION_plutus_ledger_api */
+#ifndef MIN_VERSION_plutus_ledger_api
+#define MIN_VERSION_plutus_ledger_api(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  1 || \
+  (major1) == 0 && (major2) == 1 && (minor) <= 0)
+#endif /* MIN_VERSION_plutus_ledger_api */
+/* package plutus-nft-0.1.0.0 */
+#ifndef VERSION_plutus_nft
+#define VERSION_plutus_nft "0.1.0.0"
+#endif /* VERSION_plutus_nft */
+#ifndef MIN_VERSION_plutus_nft
+#define MIN_VERSION_plutus_nft(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  1 || \
+  (major1) == 0 && (major2) == 1 && (minor) <= 0)
+#endif /* MIN_VERSION_plutus_nft */
 
 /* tool gcc-9 */
 #ifndef TOOL_VERSION_gcc
