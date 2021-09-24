@@ -13,33 +13,25 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module PlutusNft where
+module PlutusNft (apiNFTMintScript,nftScriptAsCbor) where
 
-import Codec.Serialise (serialise)
-import qualified Data.ByteString.Lazy as LB
-import Ledger
-  ( Script,
-    ScriptContext (scriptContextTxInfo),
-    TokenName,
-    TxInInfo (txInInfoOutRef),
-    TxInfo (txInfoInputs, txInfoMint),
-    TxOutRef,
-    Validator (Validator),
-    mkMintingPolicyScript,
-    unMintingPolicyScript,
-  )
-import qualified Ledger.Typed.Scripts as Scripts
-import Ledger.Value as Value (flattenValue)
+import           Cardano.Api.Shelley      (PlutusScript (..), PlutusScriptV1)
+import Codec.Serialise ( serialise )
+import qualified Data.ByteString.Lazy     as LB
+import qualified Data.ByteString.Short    as SBS
+import Ledger ( mkMintingPolicyScript, unMintingPolicyScript, ScriptContext(scriptContextTxInfo), TxInInfo(txInInfoOutRef), TxInfo(txInfoInputs, txInfoMint), Script, Validator(Validator), TxOutRef, TokenName )
+import qualified Ledger.Typed.Scripts     as Scripts
+import Ledger.Value as Value ( flattenValue )
 import qualified PlutusTx
 import PlutusTx.Prelude
-  ( Bool (False),
-    BuiltinData,
-    Eq ((==)),
-    any,
-    traceIfFalse,
-    ($),
-    (&&),
-  )
+    ( Bool(False),
+      Eq((==)),
+      BuiltinData,
+      (.),
+      (&&),
+      any,
+      ($),
+      traceIfFalse )
 
 {-# INLINEABLE mkNftPolicy #-}
 mkNftPolicy :: TokenName -> TxOutRef -> BuiltinData -> ScriptContext -> Bool
@@ -73,3 +65,6 @@ nftValidator nftName utxo = Validator $ nftScript nftName utxo
 
 nftScriptAsCbor :: TokenName -> TxOutRef -> LB.ByteString
 nftScriptAsCbor nftName utxo = serialise $ nftValidator nftName utxo
+
+apiNFTMintScript :: TokenName -> TxOutRef -> PlutusScript PlutusScriptV1
+apiNFTMintScript nftName utxo = PlutusScriptSerialised . SBS.toShort . LB.toStrict $ nftScriptAsCbor nftName utxo
