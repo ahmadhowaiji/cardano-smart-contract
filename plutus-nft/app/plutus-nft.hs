@@ -1,7 +1,7 @@
 import Cardano.Api ( writeFileTextEnvelope, Error(displayError) )
 import Data.String                         (IsString (..))
 import Ledger ( TxOutRef(TxOutRef), TxId(TxId), TokenName )
-import Ledger.Bytes                        (getLedgerBytes)
+import Ledger.Bytes                        (getLedgerBytes, fromHex)
 import Prelude
 import System.Environment                  (getArgs)
 
@@ -10,20 +10,23 @@ import Plutus.V1.Ledger.Value (TokenName(TokenName))
 
 main :: IO ()
 main = do
-    [utxo',name'] <- getArgs
-    let utxo            = parseUTxO utxo'
-        name            = parsTokenName name'
-        nftPolicyFile   = "scripts/mint-nft-plicy.plutus"
-        
+  args <- getArgs
+  print $ head args
+  let name            = parsTokenName $  head args
+      utxo            = parseUTxO  $ args !! 1
+      nftPolicyFile   = "plutus-script/mint-nft-plicy.plutus"
 
-    nftPolicyResult <- writeFileTextEnvelope nftPolicyFile Nothing $ apiNFTMintScript name utxo
-    case nftPolicyResult of
-        Left err -> print $ displayError err
-        Right () -> putStrLn $ "wrote NFT policy to file " ++ nftPolicyFile
+  nftPolicyResult <- writeFileTextEnvelope nftPolicyFile Nothing $ apiNFTMintScript name utxo
+  case nftPolicyResult of
+      Left err -> print $ displayError err
+      Right () -> putStrLn $ "wrote NFT policy to file " ++ nftPolicyFile
+
+
+
 
 
 parsTokenName :: String -> TokenName 
-parsTokenName name = TokenName $ getLedgerBytes $ fromString name
+parsTokenName name = TokenName $ getLedgerBytes $ fromString name 
 
 
 parseUTxO :: String -> TxOutRef

@@ -67,4 +67,4 @@ nftScriptAsCbor :: TokenName -> TxOutRef -> LB.ByteString
 nftScriptAsCbor nftName utxo = serialise $ nftValidator nftName utxo
 
 apiNFTMintScript :: TokenName -> TxOutRef -> PlutusScript PlutusScriptV1
-apiNFTMintScript nftName utxo = PlutusScriptSerialised . SBS.toShort . LB.toStrict $ nftScriptAsCbor nftName utxo
+apiNFTMintScript nftName utxo = PlutusScriptSerialised $ SBS.toShort $ LB.toStrict $ nftScriptAsCbor nftName utxo

@@ -43,6 +43,7 @@ library
   exposed-modules:      PlutusNft
 
   build-depends:        bytestring
+                      , hex
                       , cardano-api
                       , flat
                       , plutus-core
