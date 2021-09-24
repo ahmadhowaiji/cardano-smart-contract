@@ -1,7 +1,8 @@
 import Cardano.Api ( writeFileTextEnvelope, Error(displayError) )
 import Data.String                         (IsString (..))
+import Data.Hex ( Hex(hex) ) 
 import Ledger ( TxOutRef(TxOutRef), TxId(TxId), TokenName )
-import Ledger.Bytes                        (getLedgerBytes, fromHex)
+import Ledger.Bytes                        (getLedgerBytes)
 import Prelude
 import System.Environment                  (getArgs)
 
@@ -26,7 +27,7 @@ main = do
 
 
 parsTokenName :: String -> TokenName 
-parsTokenName name = TokenName $ getLedgerBytes $ fromString name 
+parsTokenName name = TokenName $ getLedgerBytes $ fromString $ hex $ fromString name 
 
 
 parseUTxO :: String -> TxOutRef

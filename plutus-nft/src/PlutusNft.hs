@@ -27,7 +27,6 @@ import PlutusTx.Prelude
     ( Bool(False),
       Eq((==)),
       BuiltinData,
-      (.),
       (&&),
       any,
       ($),

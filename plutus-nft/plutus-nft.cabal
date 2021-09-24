@@ -67,3 +67,4 @@ executable plutus-nft
                     , plutus-ledger-api
                     , bytestring
                     , plutus-nft
+                    , hex
