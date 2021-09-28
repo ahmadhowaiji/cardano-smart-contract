@@ -2,7 +2,7 @@ cabal-version:      2.4
 name:               oracle
 version:            0.1.0.0
 
-description:  Example plutus smart contract oracle 
+description:  Example of plutus smart contract oracle 
 author:       Ahmad Howaiji
 
 
