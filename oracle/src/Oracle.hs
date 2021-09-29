@@ -13,38 +13,61 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Oracle
-  ( Oracle,
-    OracleRedeemer,
-    oracleValue,
-    oracleTokenName,
-    oracleAsset,
-    mkOracleValidator,
-    typedOracleValidator,
-  )
-where
+module Oracle (apiOracleScript, Oracle, oracleData) where
 
-import Cardano.Api (FromJSON, ToJSON)
-import Data.Hex (Hex (hex))
-import Data.String (IsString (fromString))
-import Flat (Generic)
-import Ledger.Tx (TxOut (txOutValue))
+import Cardano.Api (FromJSON, PlutusScript, PlutusScriptV1, ToJSON)
+import Cardano.Api.Shelley (PlutusScript (PlutusScriptSerialised))
+import Codec.Serialise (serialise)
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Short as SBS
+import Ledger
+  ( AssetClass,
+    CurrencySymbol,
+    Datum (Datum),
+    DatumHash,
+    PubKeyHash,
+    ScriptContext (scriptContextTxInfo),
+    TxInInfo (txInInfoResolved),
+    TxInfo,
+    TxOut (txOutDatumHash, txOutValue),
+    Validator,
+    findDatum,
+    findOwnInput,
+    getContinuingOutputs,
+    txSignedBy,
+  )
 import qualified Ledger.Typed.Scripts as Scripts
+import Ledger.Value as Value
+  ( AssetClass (AssetClass),
+    TokenName (TokenName),
+    assetClassValueOf,
+    geq,
+  )
 import qualified Plutus.V1.Ledger.Ada as Ada
-import Plutus.V1.Ledger.Api (CurrencySymbol, Datum (Datum), DatumHash, LedgerBytes (getLedgerBytes), PubKeyHash, ScriptContext (scriptContextTxInfo), TokenName (TokenName), TxInInfo (txInInfoResolved), Validator)
-import Plutus.V1.Ledger.Contexts (TxInfo, TxOut (txOutDatumHash), findDatum, findOwnInput, getContinuingOutputs, txSignedBy)
-import Plutus.V1.Ledger.Value (AssetClass (AssetClass), assetClassValueOf, geq)
+import PlutusPrelude (Generic)
 import qualified PlutusTx
-import PlutusTx.Prelude (Bool, Eq ((==)), Integer, Maybe (Just, Nothing), Semigroup ((<>)), isJust, traceError, traceIfFalse, ($), (&&), (.))
-import Prelude (Eq, Ord, Show)
+import PlutusTx.Prelude
+  ( Bool,
+    Eq (..),
+    Integer,
+    Maybe (..),
+    emptyByteString,
+    isJust,
+    traceError,
+    traceIfFalse,
+    ($),
+    (&&),
+    (.),
+  )
+import PlutusTx.Semigroup (Semigroup ((<>)))
+import Prelude (Show)
 
 data Oracle = Oracle
   { oSymbol :: !CurrencySymbol,
     oOperator :: !PubKeyHash,
-    oFee :: !Integer,
-    oAsset :: !AssetClass
+    oFee :: !Integer
   }
-  deriving (Show, Generic, FromJSON, ToJSON, Prelude.Eq, Prelude.Ord)
+  deriving (Show, Generic, FromJSON, ToJSON)
 
 PlutusTx.makeLift ''Oracle
 
@@ -60,13 +83,9 @@ oracleValue o f = do
   Datum d <- f dh
   PlutusTx.fromBuiltinData d
 
-{-# INLINEABLE oracleTokenName #-}
-oracleTokenName :: TokenName
-oracleTokenName = TokenName $ getLedgerBytes $ fromString $ hex $ fromString ""
-
 {-# INLINEABLE oracleAsset #-}
 oracleAsset :: Oracle -> AssetClass
-oracleAsset oracle = AssetClass (oSymbol oracle, oracleTokenName)
+oracleAsset oracle = AssetClass (oSymbol oracle, TokenName emptyByteString)
 
 {-# INLINEABLE mkOracleValidator #-}
 mkOracleValidator :: Oracle -> Integer -> OracleRedeemer -> ScriptContext -> Bool
@@ -128,3 +147,12 @@ typedOracleValidator oracle =
 
 oracleValidator :: Oracle -> Validator
 oracleValidator = Scripts.validatorScript . typedOracleValidator
+
+oracleScriptAsCbor :: Oracle -> LB.ByteString
+oracleScriptAsCbor = serialise . oracleValidator
+
+apiOracleScript :: Oracle -> PlutusScript PlutusScriptV1
+apiOracleScript = PlutusScriptSerialised . SBS.toShort . LB.toStrict . oracleScriptAsCbor
+
+oracleData :: CurrencySymbol -> PubKeyHash -> Integer -> Oracle
+oracleData = Oracle
