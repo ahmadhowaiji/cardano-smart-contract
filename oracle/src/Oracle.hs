@@ -12,6 +12,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Oracle (apiOracleScript, Oracle, oracleData) where
 
@@ -25,16 +26,14 @@ import Ledger
     CurrencySymbol,
     Datum (Datum),
     DatumHash,
-    PubKeyHash,
     ScriptContext (scriptContextTxInfo),
     TxInInfo (txInInfoResolved),
-    TxInfo,
+    TxInfo (txInfoSignatories),
     TxOut (txOutDatumHash, txOutValue),
     Validator,
     findDatum,
     findOwnInput,
     getContinuingOutputs,
-    txSignedBy,
   )
 import qualified Ledger.Typed.Scripts as Scripts
 import Ledger.Value as Value
@@ -46,8 +45,9 @@ import Ledger.Value as Value
 import qualified Plutus.V1.Ledger.Ada as Ada
 import PlutusPrelude (Generic)
 import qualified PlutusTx
+import PlutusTx.Builtins.Class (stringToBuiltinString)
 import PlutusTx.Prelude
-  ( Bool,
+  ( Bool (False, True),
     Eq (..),
     Integer,
     Maybe (..),
@@ -55,7 +55,6 @@ import PlutusTx.Prelude
     isJust,
     traceError,
     traceIfFalse,
-    ($),
     (&&),
     (.),
   )
@@ -64,17 +63,12 @@ import Prelude (Show)
 
 data Oracle = Oracle
   { oSymbol :: !CurrencySymbol,
-    oOperator :: !PubKeyHash,
-    oFee :: !Integer
+    oFee :: !Integer,
+    oUpdateCode :: !Integer
   }
   deriving (Show, Generic, FromJSON, ToJSON)
 
 PlutusTx.makeLift ''Oracle
-
-data OracleRedeemer = Update | Use
-  deriving (Show)
-
-PlutusTx.unstableMakeIsData ''OracleRedeemer
 
 {-# INLINEABLE oracleValue #-}
 oracleValue :: TxOut -> (DatumHash -> Maybe Datum) -> Maybe Integer
@@ -88,15 +82,14 @@ oracleAsset :: Oracle -> AssetClass
 oracleAsset oracle = AssetClass (oSymbol oracle, TokenName emptyByteString)
 
 {-# INLINEABLE mkOracleValidator #-}
-mkOracleValidator :: Oracle -> Integer -> OracleRedeemer -> ScriptContext -> Bool
-mkOracleValidator oracle x r ctx =
+mkOracleValidator :: Oracle -> Integer -> Integer -> ScriptContext -> Bool
+mkOracleValidator oracle x r ctx = do
+  let updateValueInt = oUpdateCode oracle
   traceIfFalse "token missing from input" inputHasToken
     && traceIfFalse "token missing from output" outputHasToken
-    && case r of
-      Update ->
-        traceIfFalse "operator signature missing" (txSignedBy info $ oOperator oracle)
-          && traceIfFalse "invalid output datum" validOutputDatum
-      Use ->
+    && if r == updateValueInt
+      then traceIfFalse "invalid output datum" validOutputDatum
+      else
         traceIfFalse "oracle value changed" (outputDatum == Just x)
           && traceIfFalse "fees not paid" feesPaid
   where
@@ -123,7 +116,9 @@ mkOracleValidator oracle x r ctx =
     outputDatum = oracleValue ownOutput (`findDatum` info)
 
     validOutputDatum :: Bool
-    validOutputDatum = isJust outputDatum
+    validOutputDatum = case outputDatum of
+      Nothing -> False
+      Just _ -> True
 
     feesPaid :: Bool
     feesPaid =
@@ -135,7 +130,7 @@ data Oracling
 
 instance Scripts.ValidatorTypes Oracling where
   type DatumType Oracling = Integer
-  type RedeemerType Oracling = OracleRedeemer
+  type RedeemerType Oracling = Integer
 
 typedOracleValidator :: Oracle -> Scripts.TypedValidator Oracling
 typedOracleValidator oracle =
@@ -143,7 +138,7 @@ typedOracleValidator oracle =
     ($$(PlutusTx.compile [||mkOracleValidator||]) `PlutusTx.applyCode` PlutusTx.liftCode oracle)
     $$(PlutusTx.compile [||wrap||])
   where
-    wrap = Scripts.wrapValidator @Integer @OracleRedeemer
+    wrap = Scripts.wrapValidator @Integer @Integer
 
 oracleValidator :: Oracle -> Validator
 oracleValidator = Scripts.validatorScript . typedOracleValidator
@@ -154,5 +149,5 @@ oracleScriptAsCbor = serialise . oracleValidator
 apiOracleScript :: Oracle -> PlutusScript PlutusScriptV1
 apiOracleScript = PlutusScriptSerialised . SBS.toShort . LB.toStrict . oracleScriptAsCbor
 
-oracleData :: CurrencySymbol -> PubKeyHash -> Integer -> Oracle
+oracleData :: CurrencySymbol -> Integer -> Integer -> Oracle
 oracleData = Oracle

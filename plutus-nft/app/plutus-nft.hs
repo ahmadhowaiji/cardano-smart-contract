@@ -11,10 +11,11 @@ import Prelude
 main :: IO ()
 main = do
   args <- getArgs
-  print $ head args
-  let name = parsTokenName $ head args
-      utxo = parseUTxO $ args !! 1
+  let nbArgs = length args
+      utxo = parseUTxO $ head args
+      name = parsTokenName $ if nbArgs > 1 then args !! 1 else ""
       nftPolicyFile = "plutus-script/mint-nft-plicy.plutus"
+  print name
 
   nftPolicyResult <- writeFileTextEnvelope nftPolicyFile Nothing $ apiNFTMintScript name utxo
   case nftPolicyResult of
